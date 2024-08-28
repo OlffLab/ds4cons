@@ -1,0 +1,35 @@
+## Read multiple data tables from a Google Sheets database into R and use a relational join to merge them
+
+#  Restore libraries
+renv::restore()
+
+library(tidyverse)
+
+# Use the example database: ExampleDatabase_CensusTransects_Fredy_Milenka
+browseURL("https://docs.google.com/spreadsheets/d/1m-liu8omZMewqz_YP9j_YUmQ0zwATl3z4aRLnZFnfWc/edit?usp=sharing") # this opens the database in your browser (outside RStudio)
+
+# Set the link the list of tables in your database with their csv links
+MetTables_link<-"https://docs.google.com/spreadsheets/d/1m-liu8omZMewqz_YP9j_YUmQ0zwATl3z4aRLnZFnfWc/pub?gid=1387882554&single=true&output=csv"
+
+# Read the list of tables in the database and show it
+MetTables<-read_csv(MetTables_link)
+MetTables
+
+# read the different data tables that you want to use
+DimTransect<-read.csv(MetTables |> 
+                        dplyr::filter(data_table=="DimTransect") |>
+                        dplyr::pull(CSV_link))
+names(DimTransect)
+DimSection<-read.csv(MetTables |> 
+                       dplyr::filter(data_table=="DimSection") |>
+                       dplyr::pull(CSV_link))
+names(DimSection)
+FactSectionAnimals<-read.csv(MetTables |> 
+                               dplyr::filter(data_table=="FactSectionAnimals") |>
+                               dplyr::pull(CSV_link))
+names(FactSectionAnimals)
+
+# Merge the tables into one with a sequential relational database join
+# work from "back to front" starting with your longest file
+Data<-left_join(FactSectionAnimals, DimSection, by="Section_ID") |>
+      left_join(DimTransect, by="Transect_ID") 
